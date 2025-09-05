@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Computer Science Quiz</title>
+<style>
+  /* ===== Reset ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== Screens ===== */
+.screen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 20px;
+  transition: all 0.3s ease;
+  background: linear-gradient(-45deg, #1e3c72, #2a5298, #1e90ff, #00c6ff);
+  background-size: 400% 400%;
+  animation: gradientBG 12s ease infinite;
+  color: #fff;
+}
+
+
+/* ===== Animated Gradient ===== */
+@keyframes gradientBG {
+  0% {background-position: 0% 50%;}
+  50% {background-position: 100% 50%;}
+  100% {background-position: 0% 50%;}
+}
+
+/* ===== Titles ===== */
+.main-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  opacity: 0.9;
+}
+
+/* ===== Buttons ===== */
+.buttons {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  background: #fff;
+  color: #2a5298;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.btn:hover {
+  background: #2a5298;
+  color: white;
+}
+
+.secondary {
+  background: transparent;
+  border: 3px solid white;
+  color: white;
+}
+
+/* ===== Modal ===== */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(25, 22, 22, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal-content {
+  background: #fefefe;
+  color: #040404;
+  padding: 20px 30px;
+  border-radius: 15px;
+  max-width: 400px;
+  width: 90%;
+  position: relative;
+  text-align: center;
+}
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.hidden { display: none; }
+
+#quiz-screen {
+  width: 100%;
+  max-width: 650px;
+  padding: 40px;
+  border-radius: 50px;
+  backdrop-filter: blur(15px);
+ 
+  background: rgb(255, 255, 255,0.15); 
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+
+
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 90vh;
+  margin: 0 auto;
+  text-align: center;
+}
+
+#question {
+  font-size: 1.8rem;
+  margin: 20px 0;
+}
+
+#options {
+  width: 100%;
+}
+
+.option-btn {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  padding: 15px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  background: rgba(188, 209, 247, 0.779);
+  color: #333;
+  transition: 0.3s;
+}
+
+.option-btn:hover {
+  background: #081d33;
+  color: white;
+}
+
+.correct { background: #2ecc71 !important; color: white; }
+.wrong { background: #e74c3c !important; color: white; }
+
+/* ===== Timer & Progress ===== */
+#timer {
+  font-size: 18px;
+  margin: 10px 0;
+}
+
+#progress-container {
+  width: 100%;
+  background: rgb(225, 225, 246);
+  border-radius: 10px;
+  margin: 10px 0;
+  height: 20px;
+  overflow: hidden;
+}
+
+#progress-bar {
+  width: 0%;
+  height: 100%;
+  background: #268ff8;
+  border-radius: 10px;
+  transition: width 0.5s ease, background 0.5s ease;
+}
+
+/* ===== Result Screen ===== */
+#result-screen {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 25px;
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+
+}
+
+/* العنوان (السكور) */
+#result-screen h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #040404;
+}
+
+/* الرسالة */
+#result-screen p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin-bottom: 20px;
+  color: #040404;
+}
+
+/* أزرار النتيجة */
+#result-screen button {
+  padding: 12px 25px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.3s ease;
+  margin: 5px;
+}
+
+/* زر إعادة اللعب */
+#result-screen button:first-of-type {
+  background: #11589f;
+  color: #fff;
+}
+#result-screen button:first-of-type:hover {
+  background: #005ecb;
+}
+
+/* زر العودة للصفحة الرئيسية */
+#result-screen button:last-of-type {
+  background:#1e3c72 ;
+  color: #ffffff;
+}
+#result-screen button:last-of-type:hover {
+  background: #e6e6e6;
+}
+
+/* ===== Responsive ===== */
+@media(max-width: 600px){
+  .main-title { font-size: 2rem; }
+  .subtitle { font-size: 1rem; }
+  .option-btn { font-size: 14px; padding: 10px; }
+  .btn { font-size: 1rem; padding: 10px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Home Screen -->
+<div id="home-screen" class="screen">
+  <h1 class="main-title">Welcome to the test </h1>
+  <p class="subtitle">Discover your skills in computer science through an interactive quiz🚀</p>
+  <div class="buttons">
+    <button id="start-btn" class="btn">Start Quiz</button>
+    <button id="how-btn" class="btn secondary">How to Play</button>
+  </div>
+  <!-- Footer -->
+<footer style="text-align:center; padding:15px; color:#fff; opacity:0.8; font-size:0.8rem;">
+  Created by Mohammed dia Elhak
+</footer>
+</div>
+<!-- How to Play Modal -->
+<div id="how-modal" class="modal hidden">
+  <div class="modal-content">
+    <span id="close-how" class="close">&times;</span>
+    <h2>How to Play</h2>
+    <p>⏳ You have 30 seconds for each question.</p>
+    <p>✅ Correct answers give you 1 point.</p>
+    <p>📊 Try to score as high as possible!</p>
+    <p>🌟 Good luck and have fun!</p>
+  </div>
+</div>
+
+<!-- Quiz Screen -->
+<div id="quiz-screen" class="container hidden">
+
+  <div id="progress-container">
+    <div id="progress-bar"></div>
+  </div>
+  <div id="timer">⏱️ Time left: <span id="time">30</span>s</div>
+  <h2 id="question"></h2>
+  <div id="options"></div>
+</div>
+
+
+<!-- Result Screen -->
+<div id="result-screen" class="container hidden">
+  <h2 id="score"></h2>
+  <p id="message"></p>
+  <button onclick="restartQuiz()">🔄 Restart</button>
+  <button onclick="goHome()">🏠 Home</button>
+</div>
+
+<script>
+// ===== الأسئلة =====
+const quizData = { 
+
+
+     
+      hardware: [
+        { question: "What is the role of the CPU?", options: ["Store data","Process data and execute instructions","Provide power","Render graphics"], answer: 1 },
+        { question: "Which unit measures CPU speed?", options: ["GB","Hz","Pixel","Watt"], answer: 1 },
+        { question: "Which storage type is faster?", options: ["HDD","SSD","Floppy Disk","CD"], answer: 1 },
+        { question: "Main function of the Motherboard?", options: ["Store data","Connect all components","Cooling","Run programs"], answer: 1 },
+        { question: "Which component processes graphics?", options: ["CPU","RAM","GPU","PSU"], answer: 2 }
+      ],
+      programming: [
+        { question: "What is the complexity of nested loops (n x n)?", options: ["O(n)","O(log n)","O(n²)","O(1)"], answer: 2 },
+        { question: "Keyword 'virtual' in C++ is used for?", options: ["Constant variable","Multiple inheritance","Polymorphism","Faster execution"], answer: 2 },
+        { question: "Which language is primarily used for Android apps?", options: ["Swift","Kotlin","C#","Ruby"], answer: 1 },
+        { question: "What does 'OOP' stand for?", options: ["Only One Program","Object Oriented Programming","Official Online Platform","Open Operation Procedure"], answer: 1 },
+        { question: "Which of these is not a programming paradigm?", options: ["Functional","Procedural","Constructive","Object-Oriented"], answer: 2 }
+      ],
+      web: [
+        { question: "JavaScript can be used in Back-end with Node.js", options: ["True","False"], answer: 0 },
+        { question: "REST method used to update a resource?", options: ["GET","POST","PUT","DELETE"], answer: 2 },
+        { question: "Cart Abandonment means?", options: ["Site error","Customer adds products but doesn’t checkout","Expired product","Payment failed"], answer: 1 },
+        { question: "What does CSS stand for?", options: ["Creative Style Sheet","Cascading Style Sheets","Colorful Style System","Code Styling Syntax"], answer: 1 },
+        { question: "Default protocol of the web?", options: ["FTP","SMTP","HTTP","SSH"], answer: 2 }
+      ],
+      ux: [
+        { question: "Hick’s Law means?", options: ["More choices = longer decision time","Dark colors are always better","Long text is always confusing","Users prefer complexity"], answer: 0 },
+        { question: "Goal of 'Prototype' in Design Thinking?", options: ["Test ideas with users","Define the problem","Collect data","Analyze competitors"], answer: 0 },
+        { question: "What is a wireframe?", options: ["Finished design","Basic layout sketch","Database model","Code snippet"], answer: 1 },
+        { question: "What is 'Accessibility' in UX?", options: ["Fast website","Accessible for all including disabled users","Free access","Open source design"], answer: 1 },
+        { question: "What does A/B testing mean?", options: ["Comparing two versions","Testing algorithms","Automatic Bug testing","AI model evaluation"], answer: 0 }
+      ],
+      security: [
+        { question: "Attack tricking users to steal info?", options: ["SQL Injection","Phishing","DDoS","Buffer Overflow"], answer: 1 },
+        { question: "HTTPS protects from all attacks.", options: ["True","False"], answer: 1 },
+        { question: "What is a firewall?", options: ["Anti-virus software","Network security barrier","Data backup tool","VPN"], answer: 1 },
+        { question: "Strong password should have?", options: ["Only letters","Mixed characters, numbers, symbols","Just numbers","Your name"], answer: 1 },
+        { question: "Ransomware is?", options: ["Software update","Malware demanding payment","Ad blocker","Cloud service"], answer: 1 }
+      ],
+      ai: [
+        { question: "Difference between ML and DL?", options: ["ML is harder","DL is part of ML","ML only uses neural networks","No difference"], answer: 1 },
+        { question: "Self-driving cars use?", options: ["AI","Fixed rules","Sorting algorithms","GPU only"], answer: 0 },
+        { question: "NLP is about?", options: ["Computer Vision","Robotics","Natural Language Processing","Neural Physics Learning"], answer: 2 },
+        { question: "Which company created TensorFlow?", options: ["Apple","Google","Microsoft","IBM"], answer: 1 },
+        { question: "AI system beating humans in Go game?", options: ["AlphaGo","Deep Blue","Watson","ChatGPT"], answer: 0 }
+      ],
+      networks: [
+        { question: "Ping is used to test connectivity", options: ["True","False"], answer: 0 },
+        { question: "IPv4 length?", options: ["16 bits","32 bits","64 bits","128 bits"], answer: 1 },
+        { question: "Device connecting networks?", options: ["Switch","Router","Hub","GPU"], answer: 1 },
+        { question: "Protocol for email sending?", options: ["SMTP","HTTP","FTP","SSH"], answer: 0 },
+        { question: "Wi-Fi stands for?", options: ["Wireless Fidelity","Wide Fiber","Wireless Fiber","Wired File"], answer: 0 }
+      ]
+    };
+
+
+// ===== عناصر DOM =====
+const startBtn = document.getElementById("start-btn");
+const homeScreen = document.getElementById("home-screen");
+const quizScreen = document.getElementById("quiz-screen");
+const resultScreen = document.getElementById("result-screen");
+const progressBar = document.getElementById("progress-bar");
+const questionEl = document.getElementById("question");
+const optionsEl = document.getElementById("options");
+const timeEl = document.getElementById("time");
+const howBtn = document.getElementById("how-btn");
+const howModal = document.getElementById("how-modal");
+const closeHow = document.getElementById("close-how");
+
+let questions = [];
+let currentQuestion = 0;
+let score = 0;
+let timer;
+let timeLeft = 30;
+
+// ===== Start Quiz =====
+startBtn.addEventListener("click", () => {
+  questions = pickBalancedQuestions();
+  currentQuestion = 0;
+  score = 0;
+  homeScreen.classList.add("hidden");
+  quizScreen.classList.remove("hidden");
+  showQuestion();
+});
+
+// ===== Shuffle =====
+function shuffleArray(array){ return array.sort(()=>Math.random()-0.5); }
+
+// ===== Pick questions =====
+function pickBalancedQuestions(){
+  let balanced = [];
+  Object.keys(quizData).forEach(cat=>{
+    balanced = balanced.concat(shuffleArray(quizData[cat]).slice(0,3));
+  });
+  return shuffleArray(balanced).slice(0,20);
+}
+
+// ===== Show Question =====
+function showQuestion(){
+  if(!questions[currentQuestion]) return;
+  clearInterval(timer);
+  timeLeft = 30; timeEl.textContent = timeLeft;
+
+  // Progress
+  progressBar.style.width = ((currentQuestion)/questions.length*100) + "%";
+
+  // Question & Options
+  const q = questions[currentQuestion];
+  questionEl.textContent = q.question;
+  optionsEl.innerHTML = "";
+  q.options.forEach((opt,i)=>{
+    const btn = document.createElement("button");
+    btn.classList.add("option-btn");
+    btn.textContent = opt;
+    btn.onclick = ()=>checkAnswer(i,btn);
+    optionsEl.appendChild(btn);
+  });
+
+  startTimer();
+}
+
+// ===== Timer =====
+function startTimer(){
+  timer = setInterval(()=>{
+    timeLeft--;
+    timeEl.textContent = timeLeft;
+    if(timeLeft<=0){
+      clearInterval(timer);
+      nextQuestion();
+    }
+  },1000);
+}
+
+// ===== Check Answer =====
+function checkAnswer(index,btn){
+  const q = questions[currentQuestion];
+  if(index===q.answer){ score++; btn.classList.add("correct"); }
+  else{ btn.classList.add("wrong"); }
+  clearInterval(timer);
+  setTimeout(nextQuestion,700);
+}
+
+// ===== Next Question =====
+function nextQuestion(){
+  currentQuestion++;
+  if(currentQuestion<questions.length) showQuestion();
+  else showResult();
+}
+
+// ===== Show Result =====
+function showResult(){
+  quizScreen.classList.add("hidden");
+  resultScreen.classList.remove("hidden");
+  document.getElementById("score").textContent = `You scored ${score} out of ${questions.length}! 🌟`;
+  let msg = score>15 ? "🌟 Genius! Outstanding performance!" : score>10 ? "💡 Great job, keep pushing!" : "📘 Keep practicing, you’ll get better!";
+  document.getElementById("message").textContent = msg;
+}
+
+// ===== Restart & Home =====
+function restartQuiz(){ resultScreen.classList.add("hidden"); quizScreen.classList.remove("hidden"); questions=pickBalancedQuestions(); currentQuestion=0; score=0; showQuestion(); }
+function goHome(){ resultScreen.classList.add("hidden"); quizScreen.classList.add("hidden"); homeScreen.classList.remove("hidden"); }
+
+// ===== How Modal =====
+howBtn.onclick = ()=>howModal.classList.remove("hidden");
+closeHow.onclick = ()=>howModal.classList.add("hidden");
+window.onclick = e=>{ if(e.target===howModal) howModal.classList.add("hidden"); }
+</script>
+</body>
+</html>
