@@ -7,7 +7,7 @@
     <style>
         /*
         ========================================
-        CSS Styling (Improved Aesthetics and Transitions)
+        CSS Styling
         ========================================
         */
         body {
@@ -28,7 +28,7 @@
             padding: 10px;
         }
 
-        /* Tabs Styling with rounded corners and smooth transition */
+        /* Tabs Styling */
         .tabs {
             display: flex;
             margin-bottom: 10px;
@@ -179,13 +179,13 @@
             <button class="button function-button" data-value="acos(">cos⁻¹</button>
             <button class="button function-button" data-value="atan(">tan⁻¹</button>
             
-            <button class="button function-button" data-value="^" data-action="prefix-function" data-prefix="X^Y">xʸ</button>
-            <button class="button function-button" data-value="^3" data-action="prefix-function" data-prefix="X^3">x³</button>
-            <button class="button function-button" data-value="^2" data-action="prefix-function" data-prefix="X^2">x²</button>
-
-            <button class="button function-button" data-value="yroot" data-action="prefix-function" data-prefix="Y√X">ʸ√x</button>
-            <button class="button function-button" data-value="cbrt" data-action="prefix-function" data-prefix="3√X">³√x</button>
-            <button class="button function-button" data-value="√" data-action="prefix-function" data-prefix="√X">√x</button>
+            <button class="button function-button" data-value="^" data-action="prefix-function" data-prefix="^Y">xʸ</button>
+            <button class="button function-button" data-value="^2" data-action="prefix-function" data-prefix="^2">x²</button>
+            <button class="button function-button" data-value="^3" data-action="prefix-function" data-prefix="^3">x³</button>
+            
+            <button class="button function-button" data-value="yroot" data-action="prefix-function" data-prefix="Y√">ʸ√x</button>
+            <button class="button function-button" data-value="cbrt" data-action="prefix-function" data-prefix="3√">³√x</button>
+            <button class="button function-button" data-value="√" data-action="prefix-function" data-prefix="√">√x</button>
             
             <button class="button function-button" data-value="ln(">ln</button>
             <button class="button function-button" data-value="log10(">log</button>
@@ -258,11 +258,12 @@
     
     const toRad = (angle) => (mode === 'deg' ? angle * (Math.PI / 180) : angle);
     const factorial = (n) => (n < 0 ? NaN : n === 0 ? 1 : n * factorial(n - 1));
-    // Note: nthRoot(y, x) calculates the y-th root of x (used for Y√X)
+    // Note: nthRoot(y, x) calculates the y-th root of x (index Y, base X)
     const nthRoot = (y, x) => Math.pow(x, 1 / y);
 
     /**
-     * Finds the last numerical part (number or parenthesized expression) in the current expression.
+     * Finds the last numerical part (number or parenthesized expression or function) 
+     * in the current expression.
      */
     const findLastNumericPart = (exp) => {
         // 1. Check for last number or constant (pi/e/Ans)
@@ -306,8 +307,7 @@
 
 
     /**
-     * Converts the current expression into an evaluable JavaScript expression.
-     * This is where symbols like ^ and √ are converted to JS functions.
+     * Converts the current expression (using symbols like ^ and √) into an evaluable JavaScript expression.
      */
     const prepareExpression = (expression) => {
         let prep = expression;
@@ -318,29 +318,27 @@
         
         // --- 2. Replace functions using symbols (Roots and Powers) ---
         
-        // Handle Nth Root (Y√X) -> nthRoot(Y, X) 
-        // Note: Y is the index, X is the base.
-        // Regex: Matches (index)√ (base)
-        // We use a lookbehind and a lookahead to properly capture the elements around √.
-        // This is complex, so for simplicity in the calculator context, we'll assume standard root syntax.
-        
+        // This pattern matches any number, constant, or parenthesized expression
+        const basePattern = '(\\d+(\\.\\d*)*|&pi;|e|Ans|\\([^)]+\\))';
+
         // a. Square Root (√X)
-        prep = prep.replace(/√(\d+(\.\d*)*)/g, 'Math.sqrt($1)'); // for numbers
-        prep = prep.replace(/√\(([^)]+)\)/g, 'Math.sqrt($1)'); // for (expressions)
+        // Matches √ and then a number/constant/paren expression
+        prep = prep.replace(new RegExp(`√${basePattern}`, 'g'), 'Math.sqrt($1)');
 
-        // b. N-th Root (Y√X) 
-        prep = prep.replace(/(\d+)√(\d+(\.\d*)*)/g, 'nthRoot($1,$2)'); // N√X (numbers)
-        prep = prep.replace(/(\d+)√\(([^)]+)\)/g, 'nthRoot($1,$2)'); // N√(expression)
+        // b. N-th Root (^Y√X) -> nthRoot(Y, X)
+        // Matches (index)√ (base)
+        // This is complex, so we match index (number/constant/paren) followed by √ and then base
+        // Note: The index Y must be the first captured group ($1) and the base X is the second ($4)
+        const nRootPattern = new RegExp(`${basePattern}√${basePattern}`, 'g');
+        prep = prep.replace(nRootPattern, 'nthRoot($1, $4)');
         
-        // c. Power (X^Y)
-        // Note: This relies on the input being correctly structured as (base)^(power)
-        // For simplicity, we match: (last number/constant/paren)^number/constant/paren
-        prep = prep.replace(/(\d+(\.\d*)*|&pi;|e|Ans|\([^)]+\))\^(\d+(\.\d*)*|&pi;|e|Ans|\([^)]+\))/g, 'Math.pow($1,$3)');
-        
-        // This regex is highly simplified and might break with complex nested functions.
-        // It's a pragmatic solution for simple calculator logic.
+        // c. Power (X^Y) -> Math.pow(X, Y)
+        // Matches (base)^(exponent)
+        const powerPattern = new RegExp(`${basePattern}\\^${basePattern}`, 'g');
+        prep = prep.replace(powerPattern, 'Math.pow($1, $4)');
 
-        // --- 3. Replace standard functions ---
+
+        // --- 3. Replace standard prefix functions ---
 
         // Handle factorial (n!)
          prep = prep.replace(/fact\(([^)]+)\)/g, (match, p1) => {
@@ -409,47 +407,52 @@
             return; 
         }
 
-        // Handle Prefix Functions (x², x^y, y√x, √x)
+        // Handle Prefix Functions (x^2, x^y, y√x, √x)
         if (action === 'prefix-function') {
             const button = document.querySelector(`[data-action="prefix-function"][data-value="${value}"]`);
-            const prefixPattern = button.dataset.prefix;
+            const prefix = button.dataset.prefix;
 
             const { lastPart, rest } = findLastNumericPart(currentExpression);
             
             if (lastPart) {
                 let newExpression;
                 
-                // Replace 'X' (the base) and/or 'Y' (the index) with the actual last part
                 if (value === '^') {
                     // X^Y -> lastPart^
                     newExpression = rest + lastPart + value;
                 } else if (value === '^2' || value === '^3') {
                     // X^N -> lastPart^N
-                    newExpression = rest + lastPart + value.replace('^', '^(') + ')';
+                    newExpression = rest + lastPart + value;
                 } else if (value === 'yroot') {
-                    // Y√X -> √lastPart. We need to prompt for Y
-                    newExpression = rest + '(' + value.replace('yroot', '') + ')' + '√' + lastPart;
+                    // Y√X (index is next input) -> lastPart + √
+                    newExpression = rest + lastPart + '√';
                 } else if (value === 'cbrt') {
-                    // 3√X -> 3√lastPart
+                    // 3√X -> 3√lastPart (needs an opener for root base)
                     newExpression = rest + '3√' + lastPart;
                 } else if (value === '√') {
                     // √X -> √lastPart
                     newExpression = rest + value + lastPart;
                 } else {
-                    newExpression = rest + prefixPattern.replace('X', lastPart);
+                    newExpression = currentExpression + prefix;
                 }
 
                 currentExpression = newExpression;
                 resultDisplay.textContent = currentExpression;
             } else {
-                // If no number/expression precedes, add the function start
-                if (value === '√') {
-                    currentExpression += '√(';
-                } else if (value === '^') {
-                    currentExpression += '(0)^';
-                } else {
+                 // If no number/expression precedes, add a placeholder
+                 if (value === '^') {
+                     currentExpression += '0^'; 
+                 } else if (value === 'yroot') {
+                    // The index Y must be entered first
+                    currentExpression += '1√'; 
+                 } else if (value === 'cbrt') {
+                    currentExpression += '3√';
+                 } else if (value === '√') {
+                    currentExpression += '√';
+                 } else {
                     currentExpression += value;
-                }
+                 }
+
                 resultDisplay.textContent = currentExpression;
             }
             return;
@@ -458,14 +461,9 @@
         // Handle Equals
         if (action === '=') {
             try {
-                // To properly evaluate, we must wrap numbers/constants used as exponents/indices
-                let expressionToEval = currentExpression.replace(/(\d+(\.\d*)*|&pi;|e|Ans|)\^(\d+(\.\d*)*|&pi;|e|Ans)/g, '$1^($3)');
-                expressionToEval = expressionToEval.replace(/(\d+(\.\d*)*|&pi;|e|Ans|)\^(\d+(\.\d*)*|&pi;|e|Ans)/g, 'Math.pow($1,$3)');
-
-
                 const finalExpression = prepareExpression(currentExpression);
                 
-                // Add utility functions to global scope for eval
+                // Add utility function to global scope for eval
                 window.nthRoot = nthRoot; 
                 
                 let result = eval(finalExpression);
@@ -475,6 +473,7 @@
                 }
                 
                 historyDisplay.textContent = currentExpression + ' =';
+                // Clean up result for display
                 lastResult = result.toFixed(10).replace(/\.?0+$/, ""); 
                 resultDisplay.textContent = lastResult;
                 currentExpression = lastResult;
