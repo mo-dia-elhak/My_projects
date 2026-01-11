@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Information</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+    font-family:'Cairo',sans-serif;
+    background:#e6f4ea;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.card{
+    background:#fff;
+    width:100%;
+    max-width:500px;
+    padding:26px;
+    border-radius:22px;
+    border:1px solid #bbf7d0;
+}
+
+h1{
+    font-family:'Montserrat',sans-serif;
+    text-align:center;
+    font-size:32px;
+    font-weight:800;
+    margin-bottom:18px;
+    background:linear-gradient(to right,#22c55e,#15803d);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+
+.alert{
+    background:#fff7ed;
+    border:1px solid #fdba74;
+    color:#9a3412;
+    padding:14px;
+    border-radius:12px;
+    margin-bottom:15px;
+    font-size:14px;
+    display:none;
+}
+
+.row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#f0fdf4;
+    padding:12px 16px;
+    border-radius:12px;
+    margin-bottom:10px;
+}
+
+.label{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#065f46;
+    font-size:14px;
+}
+
+.value{
+    font-weight:700;
+    color:#064e3b;
+    font-size:14px;
+    text-align:right;
+    max-width:58%;
+    word-break:break-word;
+}
+
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+<h1>User Information</h1>
+
+<div id="alert" class="alert">
+<b>Location mismatch detected</b><br>
+Your IP address location does not match your GPS location.  
+This may be caused by VPN, Proxy, or ISP routing and may affect data accuracy.
+</div>
+
+<div id="content">
+
+    <div class="row"><div class="label"><i class="fas fa-network-wired"></i> IP</div><div class="value" id="ip"></div></div>
+    <div class="row"><div class="label"><i class="fas fa-city"></i> City (GPS)</div><div class="value" id="city"></div></div>
+    <div class="row"><div class="label"><i class="fas fa-map"></i> Region (GPS)</div><div class="value" id="region"></div></div>
+    <div class="row"><div class="label"><i class="fas fa-globe"></i> Country (GPS)</div><div class="value" id="country"></div></div>
+    <div class="row"><div class="label"><i class="fas fa-wifi"></i> ISP</div><div class="value" id="isp"></div></div>
+
+</div>
+</div>
+
+<script>
+let ipData = {};
+let gpsData = {};
+
+async function loadIP(){
+    const r = await fetch("https://ipwho.is/");
+    ipData = await r.json();
+
+    document.getElementById("ip").textContent = ipData.ip;
+    document.getElementById("isp").textContent = ipData.connection?.isp || "--";
+}
+
+function loadGPS(){
+    navigator.geolocation.getCurrentPosition(async pos=>{
+        gpsData.lat = pos.coords.latitude;
+        gpsData.lon = pos.coords.longitude;
+
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${gpsData.lat}&lon=${gpsData.lon}`
+        );
+        const g = await r.json();
+        const a = g.address || {};
+
+        gpsData.city = a.city || a.town || a.village || "";
+        gpsData.region = a.state || "";
+        gpsData.country = a.country || "";
+
+        document.getElementById("city").textContent = gpsData.city;
+        document.getElementById("region").textContent = gpsData.region;
+        document.getElementById("country").textContent = gpsData.country;
+
+        compareLocations();
+    },{
+        enableHighAccuracy:true
+    });
+}
+
+function compareLocations(){
+    let mismatch = false;
+
+    if(ipData.country && gpsData.country && ipData.country !== gpsData.country){
+        mismatch = true;
+    }
+
+    const dist = distance(
+        ipData.latitude, ipData.longitude,
+        gpsData.lat, gpsData.lon
+    );
+
+    if(dist > 100) mismatch = true;
+
+    if(mismatch){
+        document.getElementById("alert").style.display="block";
+    }
+}
+
+function distance(lat1, lon1, lat2, lon2){
+    const R = 6371;
+    const dLat = (lat2-lat1)*Math.PI/180;
+    const dLon = (lon2-lon1)*Math.PI/180;
+    const a =
+      Math.sin(dLat/2)**2 +
+      Math.cos(lat1*Math.PI/180) *
+      Math.cos(lat2*Math.PI/180) *
+      Math.sin(dLon/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+loadIP();
+loadGPS();
+</script>
+
+</body>
+</html>
